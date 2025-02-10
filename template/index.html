@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <title>Real-Time Updates</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static', filename='style.css') }}"></head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+    <link rel="preload" href="{{ url_for('static', filename='eat.webp') }}" as="image">
+    <link rel="preload" href="{{ url_for('static', filename='play.webp') }}" as="image">
+<body>
+
+    <div style="position: absolute; z-index: 3;">
+        <p><strong>Day:</strong> <span id="day">Listening...</span></p>
+        <p><strong>Care:</strong> <span id="care">Listening...</span></p>
+        <p><strong>Food:</strong> <span id="food">Listening...</span></p>
+    </div>
+
+    <div class="stitch">
+        <div id="interactive-div" tabindex="0" style="border-bottom: 3px solid; width: 100%; height: 50%;">
+            <canvas style="width: 100%; height:100%;"></canvas>
+        </div>
+        <div class="menu">
+            <button class="button1" type="submit" name="food_value" unselectable="on" onclick="giveFood()"></button>
+        </div>
+    
+    </div>
+
+
+    <script>
+        const div = document.getElementById("interactive-div");
+
+        const SPRITE_WIDTH = 240;
+        const SPRITE_HEIGHT = 240;
+        const BORDER_WIDTH = 1;
+        const SPACING_WIDTH = 0.93;
+
+        const PLAY_SPRITES = 68;
+        const EAT_SPRITES = 70;
+        const REST_SPRITES = 160;
+
+        const PLAY_SRC = "{{ url_for('static', filename='play.webp') }}";
+        const EAT_SRC = "{{ url_for('static', filename='eat.webp') }}";
+        const REST_SRC = "{{ url_for('static', filename='rest.webp') }}";
+
+        var canvas = document.querySelector('canvas');
+        var context = canvas.getContext('2d');
+        var image = new Image();
+
+        image.src = "{{ url_for('static', filename='rest.webp') }}";
+
+        var row = 0;
+        var stopT = false;
+        var isEating = false;
+        var isPlaying = false;
+        var isResting = true;
+
+        var tempPlay = 0;
+        var playTime = 0;
+        var playing;
+
+        function spritePos(row) { return BORDER_WIDTH + row * (SPACING_WIDTH + SPRITE_HEIGHT) }
+
+        async function giveFood() {
+            if (!isEating){
+                await updateFood();
+                row = 0; 
+                isEating = true;
+                image.src = "{{ url_for('static', filename='eat.webp') }}";
+            }
+        }
+
+        function resestAnim() {
+            isEating = false; 
+            stopT = false;
+            image.src = "{{ url_for('static', filename='rest.webp') }}";
+        }
+
+        function updateCare() {
+            fetch('/care', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json',},
+                body: JSON.stringify({Temp_care: tempPlay}),
+            }).then(response => response.json())
+            .then(data => {
+                document.getElementById('care').innerText = data.Temp_care;
+            }).catch(error => console.error('Error:', error));
+        }
+
+        function updateFood() {
+            fetch('/food', {
+                method: 'POST',
+            }).then(response => response.json())
+            .then(data => {
+                document.getElementById('food').innerText = data.Temp_food;
+            }).catch(error => console.error('Error:', error));
+        }
+
+        function animate(sprite_nr, loop) {
+            if (isEating) {
+                loop = false;
+                sprite_nr = EAT_SPRITES;
+
+            } else if (isPlaying) {
+                loop = true;
+                sprite_nr = PLAY_SPRITES;
+            } else {
+                loop = true;
+                sprite_nr = REST_SPRITES;
+            }
+
+            if (row === sprite_nr) { 
+                row = 0; 
+                if (loop === false) { stopT = true; }
+                if (isEating) {resestAnim();}
+            }
+
+            if (!stopT) {
+                var position = spritePos(row);
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                context.drawImage(image, 10, position, SPRITE_WIDTH, SPRITE_HEIGHT, 0, 0, 320, 150);
+                row += 1;
+            }
+        }
+
+        var animation = setInterval(animate, 40, REST_SPRITES, true);
+
+        image.onload = animation
+
+        window.onload = function() {
+            fetch('/get_value', {
+                method: 'GET'
+            }).then(response => response.json())
+            .then(data => {
+                document.getElementById("day").innerText = data.current_value.day;
+                document.getElementById("care").innerText = data.current_value.care;
+                document.getElementById("food").innerText = data.current_value.food;
+                tempPlay = data.current_value.care;
+            })
+            .catch(error => console.error('Error fetching value:', error));
+        };
+
+        div.addEventListener('mouseenter', () => {
+            if (!isEating) {
+                playing = setInterval(function () {
+                    tempPlay = Math.min(tempPlay + 5, 100);
+                    document.getElementById('care').innerText = tempPlay;
+                }, 1000);
+                row = 0; 
+                isPlaying = true;
+                image.src = "{{ url_for('static', filename='play.webp') }}";
+            }
+        });
+
+        div.addEventListener('mouseleave', () => {
+            if (!isEating) {
+                clearInterval(playing);
+                updateCare("care");
+                isPlaying = false;
+                image.src ="{{ url_for('static', filename='rest.webp') }}"; 
+            }
+        });
+
+        div.addEventListener('touchstart', (e) => {
+            if (!isEating) {
+                playing = setInterval(function () {
+                    tempPlay = Math.min(tempPlay + 5, 100);
+                    document.getElementById('care').innerText = tempPlay;
+                }, 1000);
+                row = 0; 
+                isPlaying = true;
+                image.src = "{{ url_for('static', filename='play.webp') }}";
+            }
+            e.preventDefault();
+        });
+
+        div.addEventListener('touchend', () => {
+            if (!isEating) {
+                clearInterval(playing);
+                updateCare("care");
+                isPlaying = false;
+                image.src ="{{ url_for('static', filename='rest.webp') }}"; 
+            }
+        });
+
+    </script>
+</body>
+</html>
