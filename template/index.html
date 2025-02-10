@@ -36,10 +36,10 @@
     <script>
         const div = document.getElementById("interactive-div");
 
-        const SPRITE_WIDTH = 240;
-        const SPRITE_HEIGHT = 240;
+        const SPRITE_WIDTH = 500;
+        const SPRITE_HEIGHT = 382;
         const BORDER_WIDTH = 1;
-        const SPACING_WIDTH = 0.93;
+        const SPACING_WIDTH = 2;
 
         const PLAY_SPRITES = 68;
         const EAT_SPRITES = 70;
@@ -169,10 +169,10 @@
 
         div.addEventListener('touchstart', (e) => {
             if (!isEating) {
-                playing = setInterval(function () {
-                    tempPlay = Math.min(tempPlay + 5, 100);
-                    document.getElementById('care').innerText = tempPlay;
-                }, 1000);
+		playing = setInterval(function (){
+		   tempPlay = Math.min(tempPlay + 5, 100);
+		   document.getElementById('care').innerText = tempPlay;
+		}, 1000);
                 row = 0; 
                 isPlaying = true;
                 image.src = "{{ url_for('static', filename='play.webp') }}";
@@ -182,8 +182,8 @@
 
         div.addEventListener('touchend', () => {
             if (!isEating) {
-                clearInterval(playing);
-                updateCare("care");
+		clearInterval(playing);
+		updateCare("care");
                 isPlaying = false;
                 image.src ="{{ url_for('static', filename='rest.webp') }}"; 
             }

@@ -2,17 +2,20 @@ from flask import Flask, jsonify, render_template, request
 from flask_compress import Compress
 import json, threading, time, os
 from datetime import datetime
+from flask_caching import Cache
 
-app = Flask(__name__, template_folder='template')
+
+app = Flask(__name__, static_url_path='/static', template_folder='template')
 Compress(app)
 
+app.config['APPLICATION_ROOT'] = ''
 app.config['COMPRESS_ALGORITHM'] = 'gzip'
-app.config['COMPRESS_LEVEL'] = 6           
-app.config['COMPRESS_MIN_SIZE'] = 500 
+app.config['COMPRESS_LEVEL'] = 6
+app.config['COMPRESS_MIN_SIZE'] = 500
 
-JSON_FILE = f'{os.path.dirname(os.path.realpath(__file__))}\\data.json'
+cache = Cache(app)
 
-print(JSON_FILE)
+JSON_FILE = f'{os.path.dirname(os.path.realpath(__file__))}/data.json'
 
 if not os.path.isfile(JSON_FILE):
     with open(JSON_FILE, "w", encoding='utf-8') as f:
@@ -20,6 +23,7 @@ if not os.path.isfile(JSON_FILE):
 
 Temp_food: int = 0
 Temp_care: int = 0
+
 
 def setData(data: str, value: int) -> None:
     dump = None
@@ -59,12 +63,12 @@ def icr_care():
 @app.route('/get_value', methods=['GET'])
 def get_value():
     global Temp_food, Temp_care
-    with open(JSON_FILE, 'r') as f:  
+    with open(JSON_FILE, 'r') as f:
         dump = json.load(f)
         Temp_food = dump['food']
         Temp_care = dump['care']
         return jsonify({'current_value': dump})
-    
+
 def updateNeeds() -> None:
     dump = None
     while True:
@@ -81,7 +85,11 @@ def updateNeeds() -> None:
 def index():
     return render_template('index.html')
 
-# if __name__ == '__main__':
-#     threading.Thread(target=updateTime, daemon=True).start()
-#     threading.Thread(target=updateNeeds, daemon=True).start()
-#     app.run(debug=True, host='0.0.0.0')
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+app.wsgi_app = ProxyFix(app.wsgi_app, x_host=1)
+
+if __name__ == '__main__':
+    threading.Thread(target=updateTime, daemon=True).start()
+    threading.Thread(target=updateNeeds, daemon=True).start()
+    app.run(debug=True, host='0.0.0.0')

@@ -1,0 +1,96 @@
+html, body {
+    margin: 0; 
+    height: 100%; 
+    overflow: hidden;
+    padding: 2%;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
+}
+
+html { scrollbar-width: none; } /* Firefox */
+body { -ms-overflow-style: none; } /* IE and Edge */
+body::-webkit-scrollbar, body::-webkit-scrollbar-button { display: none; } /* Chrome */
+img { pointer-events: none; }
+button {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+.stitch {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    width: 90%;
+    height: 100%;
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    flex-direction: column;
+    gap: 5%;
+}
+
+.stitch img { width: 100%; height: 100%;}
+
+.menu {
+    position: relative;
+    width: 70vw; /* Responsive size based on viewport width */
+    height: 70vw; /* Keep it square to ensure the circle shape */
+    max-width: 200px; /* Optional: Limit the maximum size */
+    max-height: 200px;
+    min-width: 100px; /* Optional: Set a minimum size */
+    min-height: 100px;
+    border-radius: 50%;
+    margin: 0 auto;
+}
+
+.menu button {
+    position: absolute;
+    width: 25vw; /* Responsive size for buttons */
+    height: 25vw;
+    max-width: 100px; /* Optional: Limit the maximum size */
+    max-height: 100px;
+    min-width: 30px; /* Optional: Set a minimum size */
+    min-height: 30px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); /* Add shadow to buttons */
+    border: none;
+    cursor: pointer;
+}
+
+.button1 {
+    -moz-user-select: none;
+    -webkit-user-select: none;
+
+    background-image: url("food.png");
+    background-repeat: no-repeat;
+    background-position: center; 
+    background-size: auto 70%;
+    
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, 0);
+}
+
+.button1:active {
+    filter: brightness(80%);
+    transition-duration: 0.1s;
+    -ms-transition-duration: 0.1s;
+}
+
+.button2 {
+    top: 50%;
+    left: 0;
+    transform: translate(0, -50%);
+}
+
+.button3 {
+    top: 50%;
+    right: 0;
+    transform: translate(0, -50%);
+}
+
